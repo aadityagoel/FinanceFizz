@@ -3,6 +3,7 @@ from models.user import UserCreate, UserLogin, UserResponse, Token
 from database import users_collection
 from utils.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, verify_token
 from utils.helpers import generate_id
+from utils.dependencies import get_current_user
 from datetime import datetime
 
 router = APIRouter()
@@ -65,9 +66,16 @@ async def login(credentials: UserLogin):
     }
 
 @router.post("/refresh", response_model=Token)
-async def refresh_token(refresh_token: str):
+async def refresh_token_endpoint(refresh_token: dict):
     """Refresh access token"""
-    payload = verify_token(refresh_token, "refresh")
+    token = refresh_token.get("refresh_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token required"
+        )
+    
+    payload = verify_token(token, "refresh")
     user_id = payload.get("sub")
     
     user = users_collection.find_one({"user_id": user_id})
@@ -88,15 +96,12 @@ async def refresh_token(refresh_token: str):
     }
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: dict = Depends(lambda: __import__('utils.dependencies', fromlist=['get_current_user']).get_current_user)):
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
     """Get current user information"""
-    from utils.dependencies import get_current_user
-    user = await get_current_user()
-    
     return {
-        "user_id": user["user_id"],
-        "email": user["email"],
-        "full_name": user["full_name"],
-        "role": user["role"],
-        "created_at": user["created_at"]
+        "user_id": current_user["user_id"],
+        "email": current_user["email"],
+        "full_name": current_user["full_name"],
+        "role": current_user["role"],
+        "created_at": current_user["created_at"]
     }
