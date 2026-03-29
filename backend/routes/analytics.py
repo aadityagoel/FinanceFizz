@@ -102,7 +102,7 @@ async def check_emergency_fund(current_user: dict = Depends(get_current_user)):
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": six_months_ago}
-    }, {"amount": 1, "_id": 0}))
+    }, {"amount": 1, "_id": 0}).limit(100))
     
     if expenses:
         total_expenses = sum(exp.get("amount", 0) for exp in expenses)
@@ -148,7 +148,7 @@ async def check_insurance_adequacy(current_user: dict = Depends(get_current_user
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": one_year_ago}
-    }, {"amount": 1, "_id": 0}))
+    }, {"amount": 1, "_id": 0}).limit(100))
     
     annual_expenses = sum(exp.get("amount", 0) for exp in expenses)
     estimated_annual_income = annual_expenses * 1.5  # Rough estimate
@@ -194,7 +194,7 @@ async def calculate_financial_health_score(current_user: dict = Depends(get_curr
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": one_month_ago}
-    }, {"amount": 1, "_id": 0}))
+    }, {"amount": 1, "_id": 0}).limit(100))
     monthly_expenses = sum(exp.get("amount", 0) for exp in expenses)
     
     accounts = list(accounts_collection.find(
@@ -346,7 +346,7 @@ async def analyze_expenses(current_user: dict = Depends(get_current_user)):
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }, {"amount": 1, "category": 1, "_id": 0}))
+    }, {"amount": 1, "category": 1, "_id": 0}).limit(100))
     
     if not expenses:
         return {

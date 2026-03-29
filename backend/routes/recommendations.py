@@ -50,7 +50,7 @@ def generate_rule_based_recommendations(user_id: str) -> List[Dict]:
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }, {"amount": 1, "category": 1, "_id": 0}))
+    }, {"amount": 1, "category": 1, "_id": 0}).limit(100))
     monthly_expenses = sum(exp.get("amount", 0) for exp in expenses)
     
     # 1. Emergency Fund Check
@@ -229,7 +229,7 @@ async def get_recommendations(current_user: dict = Depends(get_current_user)):
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }, {"amount": 1, "_id": 0}))
+    }, {"amount": 1, "_id": 0}).limit(100))
     
     user_data = {
         "total_cash": sum(acc.get("balance", 0) for acc in accounts),
