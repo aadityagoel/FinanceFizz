@@ -100,10 +100,22 @@ async def generate_emergency_summary(current_user: dict = Depends(get_current_us
     user_id = current_user["user_id"]
     
     # Get all financial data
-    accounts = list(accounts_collection.find({"user_id": user_id}))
-    investments = list(investments_collection.find({"user_id": user_id}))
-    insurance_policies = list(insurance_collection.find({"user_id": user_id}))
-    nominees = list(nominees_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"institution_name": 1, "account_type": 1, "balance": 1, "nominee_id": 1, "_id": 0}
+    ))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"name": 1, "investment_type": 1, "platform": 1, "current_value": 1, "nominee_id": 1, "_id": 0}
+    ))
+    insurance_policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "provider": 1, "policy_number": 1, "coverage_amount": 1, "nominee_id": 1, "claim_instructions": 1, "_id": 0}
+    ))
+    nominees = list(nominees_collection.find(
+        {"user_id": user_id},
+        {"nominee_id": 1, "name": 1, "relationship": 1, "phone": 1, "email": 1, "_id": 0}
+    ))
     
     # Build nominee map
     nominee_map = {nom["nominee_id"]: nom["name"] for nom in nominees}

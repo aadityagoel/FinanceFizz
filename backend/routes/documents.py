@@ -112,7 +112,10 @@ async def get_documents(category: str = None, current_user: dict = Depends(get_c
     if category:
         query["category"] = category
     
-    documents = list(documents_collection.find(query).sort("uploaded_at", -1))
+    documents = list(documents_collection.find(
+        query,
+        {"_id": 0}
+    ).sort("uploaded_at", -1).limit(100))
     return documents
 
 @router.get("/search")
@@ -126,7 +129,7 @@ async def search_documents(q: str, current_user: dict = Depends(get_current_user
             {"extracted_text": {"$regex": q, "$options": "i"}},
             {"tags": {"$regex": q, "$options": "i"}}
         ]
-    }))
+    }, {"_id": 0}).limit(50))
     return documents
 
 @router.get("/{document_id}", response_model=DocumentResponse)

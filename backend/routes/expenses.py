@@ -28,7 +28,10 @@ async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(ge
 @router.get("/", response_model=List[ExpenseResponse])
 async def get_expenses(current_user: dict = Depends(get_current_user)):
     """Get all expenses"""
-    expenses = list(expenses_collection.find({"user_id": current_user["user_id"]}).sort("expense_date", -1))
+    expenses = list(expenses_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).sort("expense_date", -1).limit(100))
     return expenses
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)

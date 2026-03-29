@@ -37,7 +37,10 @@ async def create_goal(goal: GoalCreate, current_user: dict = Depends(get_current
 @router.get("/", response_model=List[GoalResponse])
 async def get_goals(current_user: dict = Depends(get_current_user)):
     """Get all financial goals"""
-    goals = list(goals_collection.find({"user_id": current_user["user_id"]}))
+    goals = list(goals_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).limit(50))
     
     # Update dynamic fields
     for goal in goals:

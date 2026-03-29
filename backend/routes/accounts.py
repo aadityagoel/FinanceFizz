@@ -47,7 +47,10 @@ async def create_account(account: AccountCreate, current_user: dict = Depends(ge
 @router.get("/", response_model=List[AccountResponse])
 async def get_accounts(current_user: dict = Depends(get_current_user)):
     """Get all accounts for current user"""
-    accounts = list(accounts_collection.find({"user_id": current_user["user_id"]}))
+    accounts = list(accounts_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).limit(100))
     
     result = []
     for acc in accounts:

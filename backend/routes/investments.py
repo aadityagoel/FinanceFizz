@@ -35,7 +35,10 @@ async def create_investment(investment: InvestmentCreate, current_user: dict = D
 @router.get("/", response_model=List[InvestmentResponse])
 async def get_investments(current_user: dict = Depends(get_current_user)):
     """Get all investments"""
-    investments = list(investments_collection.find({"user_id": current_user["user_id"]}))
+    investments = list(investments_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).limit(100))
     return investments
 
 @router.get("/{investment_id}", response_model=InvestmentResponse)

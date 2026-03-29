@@ -33,7 +33,10 @@ async def create_insurance(insurance: InsuranceCreate, current_user: dict = Depe
 @router.get("/", response_model=List[InsuranceResponse])
 async def get_insurance_policies(current_user: dict = Depends(get_current_user)):
     """Get all insurance policies"""
-    policies = list(insurance_collection.find({"user_id": current_user["user_id"]}))
+    policies = list(insurance_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).limit(50))
     
     # Update days_to_renewal for each policy
     for policy in policies:

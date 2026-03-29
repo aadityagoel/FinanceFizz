@@ -23,10 +23,22 @@ def generate_rule_based_recommendations(user_id: str) -> List[Dict]:
     recommendations = []
     
     # Get user data
-    accounts = list(accounts_collection.find({"user_id": user_id}))
-    investments = list(investments_collection.find({"user_id": user_id}))
-    insurance_policies = list(insurance_collection.find({"user_id": user_id}))
-    loans = list(loans_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"current_value": 1, "investment_type": 1, "_id": 0}
+    ))
+    insurance_policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "_id": 0}
+    ))
+    loans = list(loans_collection.find(
+        {"user_id": user_id},
+        {"remaining_balance": 1, "_id": 0}
+    ))
     
     # Calculate totals
     total_cash = sum(acc.get("balance", 0) for acc in accounts)
@@ -38,7 +50,7 @@ def generate_rule_based_recommendations(user_id: str) -> List[Dict]:
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }))
+    }, {"amount": 1, "category": 1, "_id": 0}))
     monthly_expenses = sum(exp.get("amount", 0) for exp in expenses)
     
     # 1. Emergency Fund Check
@@ -196,16 +208,28 @@ async def get_recommendations(current_user: dict = Depends(get_current_user)):
     user_id = current_user["user_id"]
     
     # Get user data summary
-    accounts = list(accounts_collection.find({"user_id": user_id}))
-    investments = list(investments_collection.find({"user_id": user_id}))
-    insurance_policies = list(insurance_collection.find({"user_id": user_id}))
-    loans = list(loans_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"current_value": 1, "_id": 0}
+    ))
+    insurance_policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "_id": 0}
+    ))
+    loans = list(loans_collection.find(
+        {"user_id": user_id},
+        {"remaining_balance": 1, "_id": 0}
+    ))
     
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }))
+    }, {"amount": 1, "_id": 0}))
     
     user_data = {
         "total_cash": sum(acc.get("balance", 0) for acc in accounts),

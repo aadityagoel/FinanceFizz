@@ -36,7 +36,10 @@ async def create_loan(loan: LoanCreate, current_user: dict = Depends(get_current
 @router.get("/", response_model=List[LoanResponse])
 async def get_loans(current_user: dict = Depends(get_current_user)):
     """Get all loans"""
-    loans = list(loans_collection.find({"user_id": current_user["user_id"]}))
+    loans = list(loans_collection.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).limit(50))
     return loans
 
 @router.get("/{loan_id}", response_model=LoanResponse)

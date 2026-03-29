@@ -15,16 +15,25 @@ async def get_net_worth(current_user: dict = Depends(get_current_user)):
     user_id = current_user["user_id"]
     
     # Calculate Assets
-    accounts = list(accounts_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
     total_cash = sum(acc.get("balance", 0) for acc in accounts)
     
-    investments = list(investments_collection.find({"user_id": user_id}))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"current_value": 1, "_id": 0}
+    ))
     total_investments = sum(inv.get("current_value", 0) for inv in investments)
     
     total_assets = total_cash + total_investments
     
     # Calculate Liabilities
-    loans = list(loans_collection.find({"user_id": user_id}))
+    loans = list(loans_collection.find(
+        {"user_id": user_id},
+        {"remaining_balance": 1, "_id": 0}
+    ))
     total_liabilities = sum(loan.get("remaining_balance", 0) for loan in loans)
     
     # Net Worth
@@ -46,7 +55,10 @@ async def get_portfolio_allocation(current_user: dict = Depends(get_current_user
     """Calculate portfolio allocation breakdown"""
     user_id = current_user["user_id"]
     
-    investments = list(investments_collection.find({"user_id": user_id}))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"investment_type": 1, "current_value": 1, "_id": 0}
+    ))
     
     if not investments:
         return {
@@ -90,7 +102,7 @@ async def check_emergency_fund(current_user: dict = Depends(get_current_user)):
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": six_months_ago}
-    }))
+    }, {"amount": 1, "_id": 0}))
     
     if expenses:
         total_expenses = sum(exp.get("amount", 0) for exp in expenses)
@@ -100,7 +112,10 @@ async def check_emergency_fund(current_user: dict = Depends(get_current_user)):
         avg_monthly_expense = 0
     
     # Get liquid assets (cash in accounts)
-    accounts = list(accounts_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
     liquid_assets = sum(acc.get("balance", 0) for acc in accounts)
     
     # Recommendations
@@ -133,13 +148,16 @@ async def check_insurance_adequacy(current_user: dict = Depends(get_current_user
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": one_year_ago}
-    }))
+    }, {"amount": 1, "_id": 0}))
     
     annual_expenses = sum(exp.get("amount", 0) for exp in expenses)
     estimated_annual_income = annual_expenses * 1.5  # Rough estimate
     
     # Get insurance policies
-    policies = list(insurance_collection.find({"user_id": user_id}))
+    policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "coverage_amount": 1, "_id": 0}
+    ))
     
     term_insurance = sum(pol.get("coverage_amount", 0) for pol in policies if pol.get("insurance_type") == "term")
     health_insurance = sum(pol.get("coverage_amount", 0) for pol in policies if pol.get("insurance_type") == "health")
@@ -176,10 +194,13 @@ async def calculate_financial_health_score(current_user: dict = Depends(get_curr
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": one_month_ago}
-    }))
+    }, {"amount": 1, "_id": 0}))
     monthly_expenses = sum(exp.get("amount", 0) for exp in expenses)
     
-    accounts = list(accounts_collection.find({"user_id": user_id}))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
     cash = sum(acc.get("balance", 0) for acc in accounts)
     
     if monthly_expenses > 0:
@@ -192,7 +213,10 @@ async def calculate_financial_health_score(current_user: dict = Depends(get_curr
     factors.append({"factor": "Savings Rate", "score": round(savings_score, 1), "max": 25})
     
     # 2. Insurance Coverage (25 points)
-    policies = list(insurance_collection.find({"user_id": user_id}))
+    policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "_id": 0}
+    ))
     has_term = any(pol.get("insurance_type") == "term" for pol in policies)
     has_health = any(pol.get("insurance_type") == "health" for pol in policies)
     
@@ -206,10 +230,16 @@ async def calculate_financial_health_score(current_user: dict = Depends(get_curr
     factors.append({"factor": "Insurance Coverage", "score": insurance_score, "max": 25})
     
     # 3. Debt Ratio (25 points)
-    loans = list(loans_collection.find({"user_id": user_id}))
+    loans = list(loans_collection.find(
+        {"user_id": user_id},
+        {"remaining_balance": 1, "_id": 0}
+    ))
     total_debt = sum(loan.get("remaining_balance", 0) for loan in loans)
     
-    investments = list(investments_collection.find({"user_id": user_id}))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"current_value": 1, "_id": 0}
+    ))
     total_assets = cash + sum(inv.get("current_value", 0) for inv in investments)
     
     if total_assets > 0:
@@ -247,7 +277,10 @@ async def calculate_risk_score(current_user: dict = Depends(get_current_user)):
     risk_factors = []
     
     # 1. Portfolio Concentration Risk
-    investments = list(investments_collection.find({"user_id": user_id}))
+    investments = list(investments_collection.find(
+        {"user_id": user_id},
+        {"current_value": 1, "_id": 0}
+    ))
     if investments:
         total_value = sum(inv.get("current_value", 0) for inv in investments)
         max_single_investment = max(inv.get("current_value", 0) for inv in investments)
@@ -261,8 +294,14 @@ async def calculate_risk_score(current_user: dict = Depends(get_current_user)):
             risk_factors.append({"factor": "Moderate portfolio concentration", "impact": "medium"})
     
     # 2. Debt Exposure
-    loans = list(loans_collection.find({"user_id": user_id}))
-    accounts = list(accounts_collection.find({"user_id": user_id}))
+    loans = list(loans_collection.find(
+        {"user_id": user_id},
+        {"remaining_balance": 1, "_id": 0}
+    ))
+    accounts = list(accounts_collection.find(
+        {"user_id": user_id},
+        {"balance": 1, "_id": 0}
+    ))
     
     total_debt = sum(loan.get("remaining_balance", 0) for loan in loans)
     total_cash = sum(acc.get("balance", 0) for acc in accounts)
@@ -277,7 +316,10 @@ async def calculate_risk_score(current_user: dict = Depends(get_current_user)):
             risk_factors.append({"factor": "High debt exposure", "impact": "medium"})
     
     # 3. Lack of Insurance
-    policies = list(insurance_collection.find({"user_id": user_id}))
+    policies = list(insurance_collection.find(
+        {"user_id": user_id},
+        {"insurance_type": 1, "_id": 0}
+    ))
     if not any(pol.get("insurance_type") == "health" for pol in policies):
         risk_score += 20
         risk_factors.append({"factor": "No health insurance", "impact": "high"})
@@ -304,7 +346,7 @@ async def analyze_expenses(current_user: dict = Depends(get_current_user)):
     expenses = list(expenses_collection.find({
         "user_id": user_id,
         "expense_date": {"$gte": thirty_days_ago}
-    }))
+    }, {"amount": 1, "category": 1, "_id": 0}))
     
     if not expenses:
         return {
